@@ -11,12 +11,14 @@ class GithubChangelogGenerator
     const LABEL_TYPE_FEATURE    = 'type_feature';
     const LABEL_TYPE_PR         = 'type_pr';
 
+    /* @var array */
     private $issueLabelMapping = [
         self::LABEL_TYPE_BUG => [
-            'bug'
+            'bug',
         ],
         self::LABEL_TYPE_FEATURE => [
-            'enhancement'
+            'enhancement',
+            'feature',
         ],
     ];
 
@@ -84,11 +86,16 @@ class GithubChangelogGenerator
      * @param $repository
      * @param null $startDate
      * @return array
+     * @throws Exception
      */
     private function collectReleaseIssues($user, $repository, $startDate = null)
     {
         $releases = $this->callGitHubApi(sprintf('repos/%s/%s/releases', $user, $repository));
         $data = [];
+
+        if (count($releases) <= 0) {
+            throw new \Exception('No releases found for this repository');
+        }
 
         do
         {
@@ -133,24 +140,25 @@ class GithubChangelogGenerator
             {
                 unset($this->currentIssues[$x]);
 
-                $events = $this->callGitHubApi(sprintf('repos/%s/%s/issues/%s/events', $user, $repository, $issue->number));
-                $isMerged = false;
-
-                foreach ($events as $event) {
-                    if(($event->event == 'merged' || $event->event == 'referenced') && !empty($event->commit_id)) {
-                        $isMerged = true;
-                        break;
-                    }
-                }
-
-                if (!isset($issue->pull_request)) {
-                    $type = $this->getTypeFromLabels($issue->labels);
-                } else {
+                $type = $this->getTypeFromLabels($issue->labels);
+                if (!$type && isset($issue->pull_request)) {
                     $type = $this::LABEL_TYPE_PR;
                 }
 
-                if ($type && $isMerged) {
-                    $issues[$type][] = $issue;
+                if ($type) {
+                    $events = $this->callGitHubApi(sprintf('repos/%s/%s/issues/%s/events', $user, $repository, $issue->number));
+                    $isMerged = false;
+
+                    foreach ($events as $event) {
+                        if(($event->event == 'merged' || $event->event == 'referenced') && !empty($event->commit_id)) {
+                            $isMerged = true;
+                            break;
+                        }
+                    }
+
+                    if ($isMerged) {
+                        $issues[$type][] = $issue;
+                    }
                 }
             }
         }
@@ -189,7 +197,7 @@ class GithubChangelogGenerator
         $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
         foreach($haystack as $key => $value) {
             $current_key = $key;
-            if($label === $value OR (is_array($value) && $this->getTypeFromLabel($label, $value) !== false)) {
+            if((is_array($value) && $this->getTypeFromLabel($label, $value) !== false) || (!is_array($value) && strcasecmp($label, $value) === 0)) {
                 return $current_key;
             }
         }
@@ -207,11 +215,11 @@ class GithubChangelogGenerator
     private function callGitHubApi($call, $params = [], $page = 1)
     {
         $params = array_merge(
+            $params,
             [
                 'access_token' => $this->token,
                 'page' => $page
-            ],
-            $params
+            ]
         );
 
         $options  = [
@@ -223,6 +231,12 @@ class GithubChangelogGenerator
         $url = sprintf('https://api.github.com/%s?%s', $call, http_build_query($params));
         $context  = stream_context_create($options);
         $response = file_get_contents($url, null, $context);
-        return $response ? json_decode($response) : null;
+        $response = $response ? json_decode($response) : [];
+
+        if(count(preg_grep('#Link: <(.+?)>; rel="next"#', $http_response_header)) === 1) {
+            return array_merge($response, $this->callGitHubApi($call, $params, ++$page));
+        }
+
+        return $response;
     }
 }
