@@ -64,9 +64,9 @@ class GithubChangelogGenerator
         {
             switch ($type)
             {
-                case $this::LABEL_TYPE_BUG: fwrite($fileStream, '** Fixed bugs: **' . "\r\n\r\n"); break;
-                case $this::LABEL_TYPE_FEATURE: fwrite($fileStream, '** New features: **' . "\r\n\r\n"); break;
-                case $this::LABEL_TYPE_PR: fwrite($fileStream, '** Merged pull requests: **' . "\r\n\r\n"); break;
+                case $this::LABEL_TYPE_BUG: fwrite($fileStream, '**Fixed bugs:**' . "\r\n\r\n"); break;
+                case $this::LABEL_TYPE_FEATURE: fwrite($fileStream, '**New features:**' . "\r\n\r\n"); break;
+                case $this::LABEL_TYPE_PR: fwrite($fileStream, '**Merged pull requests:**' . "\r\n\r\n"); break;
             }
 
             foreach ($currentIssues as $issue) {

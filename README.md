@@ -35,13 +35,13 @@ if your repository use different labels for ``features`` or ``bugs`` you need to
 
 ## [v2.0.1](https://github.com/ins0/google-measurement-php-client/releases/tag/v2.0.1) (2015-03-04T13:01:39Z)
 
-** Merged pull requests: **
+**Merged pull requests:**
 
 - Change answer reader script in socket.php [\#21](https://github.com/ins0/google-measurement-php-client/pull/21)
 
 ## [v2.0.0](https://github.com/ins0/google-measurement-php-client/releases/tag/v2.0.0) (2015-01-03T03:16:25Z)
 
-** New features: **
+**New features:**
 
 - Sessions versus events [\#18](https://github.com/ins0/google-measurement-php-client/issues/18)
 
@@ -49,17 +49,17 @@ if your repository use different labels for ``features`` or ``bugs`` you need to
 
 ## [v1.0.0](https://github.com/ins0/google-measurement-php-client/releases/tag/v1.0.0) (2014-12-20T13:41:01Z)
 
-** Merged pull requests: **
+**Merged pull requests:**
 
 - Additional Tracking Options [\#11](https://github.com/ins0/google-measurement-php-client/pull/11)
 - Commerce Transaction [\#5](https://github.com/ins0/google-measurement-php-client/pull/5)
 - Fix for issue #1 [\#2](https://github.com/ins0/google-measurement-php-client/pull/2)
 
-** New features: **
+**New features:**
 
 - Client ID [\#7](https://github.com/ins0/google-measurement-php-client/issues/7)
 
-** Fixed bugs: **
+**Fixed bugs:**
 
 - Directory for "Racecore" should be camel-cased - currently breaking linux installations. [\#1](https://github.com/ins0/google-measurement-php-client/issues/1)
 
