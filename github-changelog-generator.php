@@ -7,10 +7,9 @@ class GithubChangelogGenerator
 
     private $currentIssues;
 
-    const LABEL_TYPE_BUG = 'type_bug';
-    const LABEL_TYPE_FEATURE = 'type_feature';
-    const LABEL_TYPE_PR = 'type_pr';
-
+    const LABEL_TYPE_BUG        = 'type_bug';
+    const LABEL_TYPE_FEATURE    = 'type_feature';
+    const LABEL_TYPE_PR         = 'type_pr';
 
     private $issueLabelMapping = [
         self::LABEL_TYPE_BUG => [
@@ -23,15 +22,24 @@ class GithubChangelogGenerator
 
     public function __construct($token = null, $issueMapping = null)
     {
-        if ($this->issueLabelMapping) {
+        if ($issueMapping) {
             $this->issueLabelMapping = $issueMapping;
         }
 
         $this->token = $token;
     }
 
+    /**
+     * Create a changelog from given username and repository
+     *
+     * @param $user
+     * @param $repository
+     * @param null $savePath
+     */
     public function createChangelog($user, $repository, $savePath = null)
     {
+        $this->currentIssues = null;
+
         $savePath = !$savePath ? dirname(__FILE__) . '/' . $this->fileName : null;
         $releases = $this->collectReleaseIssues($user, $repository);
 
@@ -44,6 +52,12 @@ class GithubChangelogGenerator
         }
     }
 
+    /**
+     * Write release issues to file
+     *
+     * @param $fileStream
+     * @param $issues
+     */
     private function writeReleaseIssues($fileStream, $issues)
     {
         foreach ($issues as $type => $currentIssues)
@@ -63,6 +77,14 @@ class GithubChangelogGenerator
         }
     }
 
+    /**
+     * Collect all issues from release tags
+     *
+     * @param $user
+     * @param $repository
+     * @param null $startDate
+     * @return array
+     */
     private function collectReleaseIssues($user, $repository, $startDate = null)
     {
         $releases = $this->callGitHubApi(sprintf('repos/%s/%s/releases', $user, $repository));
@@ -80,7 +102,7 @@ class GithubChangelogGenerator
             $lastReleaseDate = $lastRelease ? $lastRelease->published_at : null;
             prev($releases);
 
-            $currentRelease->issues = $this->collectIssues($currentRelease, $lastReleaseDate, $user, $repository);
+            $currentRelease->issues = $this->collectIssues($lastReleaseDate, $user, $repository);
             $data[] = $currentRelease;
 
         }while(next($releases));
@@ -88,7 +110,15 @@ class GithubChangelogGenerator
         return $data;
     }
 
-    private function collectIssues($currentRelease, $lastReleaseDate, $user, $repository)
+    /**
+     * Collect all issues from release date
+     *
+     * @param $lastReleaseDate
+     * @param $user
+     * @param $repository
+     * @return array
+     */
+    private function collectIssues($lastReleaseDate, $user, $repository)
     {
         if (!$this->currentIssues) {
             $this->currentIssues = $this->callGitHubApi(sprintf('repos/%s/%s/issues', $user, $repository), [
@@ -128,6 +158,12 @@ class GithubChangelogGenerator
         return $issues;
     }
 
+    /**
+     * Get the Issue Type from Issue Labels
+     *
+     * @param $labels
+     * @return bool|int|null|string
+     */
     private function getTypeFromLabels($labels)
     {
         $type = null;
@@ -141,6 +177,13 @@ class GithubChangelogGenerator
         return null;
     }
 
+    /**
+     * Get Type by label
+     *
+     * @param $label
+     * @param null $haystack
+     * @return bool|int|string
+     */
     private function getTypeFromLabel($label, $haystack = null)
     {
         $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
@@ -153,6 +196,14 @@ class GithubChangelogGenerator
         return false;
     }
 
+    /**
+     * API call to the github api v3
+     *
+     * @param $call
+     * @param array $params
+     * @param int $page
+     * @return mixed|null
+     */
     private function callGitHubApi($call, $params = [], $page = 1)
     {
         $params = array_merge(
@@ -175,19 +226,3 @@ class GithubChangelogGenerator
         return $response ? json_decode($response) : null;
     }
 }
-
-
-$options = getopt("u:r:t:f:");
-
-$token = isset($options['t']) ? $options['t'] : null;
-$user = isset($options['u']) ? $options['u'] : null;
-$repository = isset($options['r']) ? $options['r'] : null;
-$saveFilePath = isset($options['f']) ? $options['f'] : null;
-
-if (!$user || !$repository)
-{
-    die('option -u [username] -r [repository] are required');
-}
-
-$gen = new GithubChangelogGenerator($token);
-$gen->createChangelog($user, $repository, $saveFilePath);
