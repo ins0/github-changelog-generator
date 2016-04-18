@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+
+require_once '../vendor/autoload.php';
+
+// define CLI arguments
+$cli = new Commando\Command();
+$cli->beepOnError(false);
+
+// repository
+$cli->argument(0)
+    ->referToAs('repository')
+    ->require()
+    ->describedAs('The GitHub repository to generate the changelog for.')
+    ->must(function ($val) {
+        // cannot begin or end with a slash, and slash can only occur once
+        return substr_count($val, '/') === 1 && substr($val, 0, 1) !== '/'
+            && substr($val, strlen($val) - 1, 1) !== '/';
+    });
+
+// GitHub token
+$cli->flag('t')
+    ->alias('token')
+    ->describedAs('Your GitHub Account\'s OAUTH token.');
+
+// file
+$cli->flag('f')
+    ->alias('file')
+    ->describedAs('Write the changelog to a file');
+
+$repository = new ins0\GitHub\Repository($cli[0], $cli['token']);
+$changelog = new ins0\GitHub\ChangelogGenerator($repository);
+
+try {
+    // output to CLI or write to file
+    if ($file = $cli['file']) {
+        $handle = fopen($file, 'w');
+        fwrite($handle, $changelog->generate());
+        fclose($handle);
+    } else {
+        echo $changelog->generate();
+    }
+} catch (Exception $e) {
+    echo "\n", $e->getMessage(), "\n";
+    exit(0);
+}
