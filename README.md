@@ -1,51 +1,95 @@
-# github-changelog-generator
-inspired by [https://github.com/skywinder/github-changelog-generator](https://github.com/skywinder/github-changelog-generator) implemented in PHP.
+# GitHub ChangelogGenerator
+> Creates a markdown changelog for your repository, based on your repository's releases, issues
+> and pull-requests. Inspired by [github-changelog-generator][ruby-generator-link] for Ruby.
 
-creates a markdown change log based on release tag versions and github issues.
+## Installation
+### Composer
+```cli
+$ composer require ins0/github-changelog-generator
+```
 
-## usage
+## Usage
+**Note:** *You can see an example of the output generated, [here](CHANGELOG.md).*
 
-### cli
-``github-changelog-generator.php.bat -u [github_user] -r [repository_name] -t [github_api_token]``
+### PHP
+```php
+<?php
+require_once 'vendor/autoload.php';
 
-the token option is optional - without the github api calls are limited and your change log in large projects is may not fully generated
+$token = '...';   // The token is not required, but is still recommended.
+$repository = new ins0\GitHub\Repository('ins0/github-changelog-generator', $token);
+$changelog = new ins0\GitHub\ChangelogGenerator($repository);
 
-### php
-    $generator = new GithubChangelogGenerator('*** github_api_token ***');
-    $generator->createChangelog($user, $repository);
-    
-if your repository use different labels for ``features`` or ``bugs`` you need to customize the issue mapping like
+// The ChangelogGenerator::generate() method does throw
+// exceptions, so remember to wrap your code in try/catch blocks.
+try {
+    $handle = fopen('CHANGELOG.md', 'w');
 
-    $issueLabelMapping = [
-        GithubChangelogGenerator::LABEL_TYPE_BUG => [
-            'otherLabelForBugs',
-            'moreLabels',
-        ],
-        GithubChangelogGenerator::LABEL_TYPE_FEATURE => [
-            'otherLabelForFeatures',
-            'moreLabels',
-        ],
-    ];
-    $generator = new GithubChangelogGenerator('*** github_api_token ***', $issueLabelMapping);
-    $generator->createChangelog($user, $repository, $saveFilePath);
-    
-## example output
+    if (!$handle) {
+        throw new RuntimeException('Cannot open file for writing');
+    }
 
-view ``CHANGELOG.md`` for a full change log created from [https://github.com/zendframework/modules.zendframework.com](https://github.com/zendframework/modules.zendframework.com)
+    // Write markdown output to file
+    fwrite($handle, $changelog->generate());
+    fclose($handle);
+} catch (Exception $e) {
+    // handle exceptions...
+}
+```
 
-# Change Log
+If your repository uses labels other than `feature`, `bug` or `enhancement` you can customize them, like so:
+```php
+require_once 'vendor/autoload.php';
 
-## [1.4.1](https://github.com/zendframework/modules.zendframework.com/releases/tag/1.4.1) (2015-03-09T11:24:57Z)
+$labelMappings = [
+    GithubChangelogGenerator::LABEL_TYPE_ADDED => ['feature', 'anotherFeatureLabel'],
+    GithubChangelogGenerator::LABEL_TYPE_CHANGED => ['enhancement', 'anotherEnhancementLabel'],
+    GithubChangelogGenerator::LABEL_TYPE_FIXED => ['bug', 'anotherBugLabel']
+];
 
-**New features:**
+$changelog = new ins0\GitHub\ChangelogGenerator($repository, $labelMappings);
+```
 
-- Feature: added google analytics code [\#480](https://github.com/zendframework/modules.zendframework.com/pull/480)
-- Enhancement: Assert ModuleController::viewAction() is not dispatched to [\#477](https://github.com/zendframework/modules.zendframework.com/pull/477)
-- Enhancement: added hhvm as allow failure [\#475](https://github.com/zendframework/modules.zendframework.com/pull/475)
-- Fix: Reset before pulling in changes [\#473](https://github.com/zendframework/modules.zendframework.com/pull/473)
-- [WIP] Feature: Flash Messenger Error Messages [\#421](https://github.com/zendframework/modules.zendframework.com/pull/421)
+### CLI
+```cli
+$ php vendor/bin/github-changelog-generator ins0/github-changelog-generator > CHANGELOG.md
+```
 
-**Fixed bugs:**
+## CLI
+This command line tool supports output redirection/pipelining, unless the `--file` option is provided.
 
-- Fix: Do not collect code coverage . . . for now [\#476](https://github.com/zendframework/modules.zendframework.com/pull/476)
-- Fix: Do not json_decode API response to associative array [\#474](https://github.com/zendframework/modules.zendframework.com/pull/474)
+**Required:**
+- `[repository]`**:** *The url to your GitHub repository, without the domain.* **E.g.** `ins0/github-changelog-generator`
+
+**Boolean:**
+- *This tool does not use any boolean flags.*
+
+**Optional:**
+- `--token` (`-t`)**:** *Your GithHub OAUTH token.*
+- `--file` (`-f`)**:** *Write output to a file.*
+- `--help`**:** *Access the help menu.*
+
+**Exit Codes:**
+- `0`**:** *success*
+- `1`**:** *fail*
+
+## Testing
+This library uses the [PHPUnit](https://github.com/sebastianbergmann/phpunit) test suite.
+```cli
+$ composer test
+```
+
+## Contributing
+Please see [CONTRIBUTING](CONTRIBUTING.md) and [CONDUCT](CONDUCT.md) for details.
+
+## Security
+If you discover any security related issues, please email rieger@racecore.de instead of using the issue tracker.
+
+## Credits
+- [Marco Rieger](https://github.com/ins0)
+- [Nathan Bishop](https://github.com/nbish11)
+
+## License
+The MIT License (MIT). Please see the [LICENSE](LICENSE.md) file for more information.
+
+[ruby-generator-link]: https://github.com/skywinder/github-changelog-generator
