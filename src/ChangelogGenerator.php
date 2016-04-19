@@ -192,8 +192,6 @@ use DateTime;
       */
      private function getTypeFromLabels(array $labels)
      {
-         $type = null;
-
          foreach ($labels as $label) {
              if ($foundLabel = $this->getTypeFromLabel($label->name)) {
                  return $foundLabel;
