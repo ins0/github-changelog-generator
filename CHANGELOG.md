@@ -2,11 +2,14 @@
 > This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v0.2.1](https://github.com/nbish11/github-changelog-generator/releases/tag/v0.2.1) - 2016-04-19
+### Added
+- Allowed for autoloading deprecated `GithubChangelogGenerator` class through Composer.
+
 ### Changed:
 - `Repository::fetch` is now private.
+- Autoloading hack in `github-changelog-generator.php`.
 
 ### Removed
-- Autoloading hack in `github-changelog-generator.php`.
 - Unused variable in `ChangelogGenerator::getTypeFromLabels`.
 
 ### Fixed
