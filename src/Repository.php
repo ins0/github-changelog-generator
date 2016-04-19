@@ -179,7 +179,7 @@ class Repository
      *
      * @return object|array [description]
      */
-    public function fetch($call, array $params = [], $page = 1)
+    private function fetch($call, array $params = [], $page = 1)
     {
         $params = array_merge($params, [
             'access_token' => $this->token,
