@@ -7,6 +7,7 @@
 
 ### Removed
 - Autoloading hack in `github-changelog-generator.php`.
+- Unused variable in `ChangelogGenerator::getTypeFromLabels`.
 
 ### Fixed
 - Missing semicolon in `github-changelog-generator.php`.
