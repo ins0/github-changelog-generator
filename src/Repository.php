@@ -9,7 +9,7 @@ use InvalidArgumentException;
  *
  * @see https://developer.github.com/v3/issues/
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Marco Rieger (ins0)
  * @author Nathan Bishop (nbish11) (Contributor and Refactorer)
  * @copyright (c) 2015 Marco Rieger

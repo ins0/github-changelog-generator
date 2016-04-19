@@ -8,7 +8,7 @@ use DateTime;
 /**
  * Generates a changelog using your GitHub repository's releases, issues and pull-requests.
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Marco Rieger (ins0)
  * @author Nathan Bishop (nbish11) (Contributor and Refactorer)
  * @copyright (c) 2015 Marco Rieger
