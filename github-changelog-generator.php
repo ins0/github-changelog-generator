@@ -26,7 +26,7 @@ class GithubChangelogGenerator
      *
      * @var string
      */
-    const DEFAULT_FILENAME = 'CHANGELOG.md'
+    const DEFAULT_FILENAME = 'CHANGELOG.md';
 
     /**
      * @var string
