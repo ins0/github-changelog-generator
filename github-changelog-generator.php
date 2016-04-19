@@ -1,11 +1,5 @@
 <?php
 
-// "autoload" our classes
-if (!class_exists('ins0\GitHub\Repository')) {
-    require_once 'src/Repository.php';
-    require_once 'src/ChangelogGenerator.php';
-}
-
 use ins0\GitHub\Repository;
 use ins0\Github\ChangelogGenerator;
 use RuntimeException;
