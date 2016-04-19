@@ -1,6 +1,16 @@
 # Changelog
 > This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v0.2.1](https://github.com/nbish11/github-changelog-generator/releases/tag/v0.2.1) - 2016-04-19
+### Changed:
+- `Repository::fetch` is now private.
+
+### Removed
+- Autoloading hack in `github-changelog-generator.php`.
+
+### Fixed
+- Missing semicolon in `github-changelog-generator.php`.
+
 ## [v0.2.0](https://github.com/nbish11/github-changelog-generator) - 2016-04-19
 ### Added
 - [Composer](https://getcomposer.org/)/[Packagist](https://packagist.org/) support.
