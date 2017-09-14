@@ -47,7 +47,7 @@ use DateTime;
      public function __construct(Repository $repository, array $issueMappings = [])
      {
          $this->repository = $repository;
-         array_merge($this->issueLabelMapping, $issueMappings);
+         $this->issueLabelMapping = array_merge($this->issueLabelMapping, $issueMappings);
      }
 
      /**
