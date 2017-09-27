@@ -1,0 +1,21 @@
+[
+  {
+    "url": "https://api.github.com/repos/nbish11/cl/releases/7648968",
+    "assets_url": "https://api.github.com/repos/nbish11/cl/releases/7648968/assets",
+    "upload_url": "https://uploads.github.com/repos/nbish11/cl/releases/7648968/assets{?name,label}",
+    "html_url": "https://github.com/nbish11/cl/releases/tag/0.1.0",
+    "id": 7648968,
+    "tag_name": "0.1.0",
+    "target_commitish": "master",
+    "name": "Version 0.1.0",
+    "draft": false,
+    "author": {},
+    "prerelease": false,
+    "created_at": "2017-09-06T08:02:56Z",
+    "published_at": "2017-09-06T08:03:46Z",
+    "assets": [],
+    "tarball_url": "",
+    "zipball_url": "",
+    "body": ""
+  }
+]

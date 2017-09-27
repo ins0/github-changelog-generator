@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1244058576,
+    "url": "https://api.github.com/repos/nbish11/cl/issues/events/1244058576",
+    "actor": {},
+    "event": "closed",
+    "commit_id": "68dc859ea6de2c70f219bf78796b3a19e54daa14",
+    "commit_url": "https://api.github.com/repos/nbish11/cl/commits/68dc859ea6de2c70f219bf78796b3a19e54daa14",
+    "created_at": "2017-09-11T20:29:07Z"
+  }
+]
