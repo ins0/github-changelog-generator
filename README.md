@@ -50,6 +50,17 @@ $labelMappings = [
 $changelog = new ins0\GitHub\ChangelogGenerator($repository, $labelMappings);
 ```
 
+If you would like to customize the section headers, you can override the built in ones or add additional
+```php
+require_once 'vendor/autoload.php';
+
+$typeHeadings = [
+    GithubChangelogGenerator::LABEL_TYPE_ADDED => '### New stuff!'
+];
+
+$changelog = new ins0\GitHub\ChangelogGenerator($repository, [], $labelHeaders);
+```
+
 ### CLI
 ```cli
 $ php vendor/bin/github-changelog-generator ins0/github-changelog-generator > CHANGELOG.md
@@ -88,6 +99,7 @@ If you discover any security related issues, please email rieger@racecore.de ins
 ## Credits
 - [Marco Rieger](https://github.com/ins0)
 - [Nathan Bishop](https://github.com/nbish11)
+- [Tony Murray](https://github.com/murrant)
 
 ## License
 The MIT License (MIT). Please see the [LICENSE](LICENSE.md) file for more information.

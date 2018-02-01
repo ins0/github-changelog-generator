@@ -13,7 +13,7 @@ class ChangelogGeneratorTest extends PHPUnit_Framework_TestCase
 	public function testThrowsExceptionIfNoReleasesAreFound()
 	{
 		$mockRepository = $this->getMockRepository();
-		
+
 		$mockRepository->method('getReleases')->willReturn([]);
 
 		$changelogGenerator = new ChangelogGenerator($mockRepository);
@@ -129,6 +129,33 @@ class ChangelogGeneratorTest extends PHPUnit_Framework_TestCase
 			$changelogGenerator->generate()
 		);
 	}
+
+    public function testCanOverrideTypeHeader()
+    {
+        $issues = $this->loadFixtureData('issues');
+        $typeHeaders = [ChangelogGenerator::LABEL_TYPE_FIXED => '### I fixed it!'];
+        $mockRepository = $this->getMockRepositoryWithIssues([$issues[0], $issues[3]]);
+        $changelogGenerator = new ChangelogGenerator($mockRepository, [], $typeHeaders);
+
+        $this->assertEquals(
+            $this->loadFile('output/release-with-overriden-section-header.md'),
+            $changelogGenerator->generate()
+        );
+    }
+
+	public function testCanChooseCustomTypeHeader()
+    {
+        $issues = $this->loadFixtureData('issues-with-custom-labels');
+        $issueMappings = ['custom' => ['CustomBugLabel']];
+        $typeHeaders = ['custom' => '### Custom Header'];
+        $mockRepository = $this->getMockRepositoryWithIssues([$issues[0]]);
+        $changelogGenerator = new ChangelogGenerator($mockRepository, $issueMappings, $typeHeaders);
+
+        $this->assertEquals(
+            $this->loadFile('output/release-with-custom-sections.md'),
+            $changelogGenerator->generate()
+        );
+    }
 
 	private function getMockRepositoryWithIssues(array $issues)
 	{
