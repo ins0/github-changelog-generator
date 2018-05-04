@@ -25,6 +25,12 @@
             "email": "nbish11@hotmail.com",
             "homepage": "https://github.com/nbish11",
             "role": "Developer"
+        },
+        {
+            "name": "Tony Murray",
+            "email": "murraytony@gmail.com",
+            "homepage": "https://github.com/murrant",
+            "role": "Developer"
         }
     ],
     "require": {

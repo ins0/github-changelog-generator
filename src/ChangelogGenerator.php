@@ -11,6 +11,7 @@ use DateTime;
  * @version 0.2.1
  * @author Marco Rieger (ins0)
  * @author Nathan Bishop (nbish11) (Contributor and Refactorer)
+ * @author Tony Murray (murrant) (Contributor)
  * @copyright (c) 2015 Marco Rieger
  * @license MIT
  */
@@ -36,18 +37,30 @@ use DateTime;
          //self::LABEL_TYPE_SECURITY   => []
      ];
 
+     private $typeHeadings = [
+         self::LABEL_TYPE_ADDED => "### Added",
+         self::LABEL_TYPE_CHANGED => "### Changed:",
+         self::LABEL_TYPE_DEPRECATED => "### Deprecated",
+         self::LABEL_TYPE_REMOVED => "### Removed",
+         self::LABEL_TYPE_FIXED => "### Fixed",
+         self::LABEL_TYPE_SECURITY => "### Security",
+         self::LABEL_TYPE_PR => "### Merged pull requests:",
+     ];
+
      protected static $supportedEvents = ['merged', 'referenced', 'closed', 'reopened'];
 
      /**
       * Constructs a new instance.
       *
-      * @param Repository $repository    [description]
-      * @param array      $issueMappings [description]
+      * @param Repository $repository [description]
+      * @param array $issueMappings type => issue tags/labels
+      * @param array $typeHeadings type => heading text
       */
-     public function __construct(Repository $repository, array $issueMappings = [])
+     public function __construct(Repository $repository, array $issueMappings = [], array $typeHeadings = [])
      {
          $this->repository = $repository;
          $this->issueLabelMapping = array_merge($this->issueLabelMapping, $issueMappings);
+         $this->typeHeadings = array_replace($this->typeHeadings, $typeHeadings);
      }
 
      /**
@@ -71,23 +84,7 @@ use DateTime;
              $data .= sprintf("## [%s](%s) - %s\n", $release->tag_name, $release->html_url, $publishDate);
 
              foreach ($release->issues as $type => $currentIssues) {
-                 switch ($type) {
-                     case self::LABEL_TYPE_FIXED:
-                         $data .= sprintf("### Fixed\n");
-                         break;
-
-                     case self::LABEL_TYPE_ADDED:
-                         $data .= sprintf("### Added\n");
-                         break;
-
-                     case self::LABEL_TYPE_PR:
-                         $data .= sprintf("### Merged pull requests:\n");
-                         break;
-
-                     case self::LABEL_TYPE_CHANGED:
-                         $data .= sprintf("### Changed:\n");
-                         break;
-                 }
+                 $data .= $this->getHeaderForType($type);
 
                  foreach ($currentIssues as $issue) {
                      $data .= sprintf("- %s [\#%s](%s)\n", $issue->title, $issue->number, $issue->html_url);
@@ -181,6 +178,17 @@ use DateTime;
          }
 
          return $issues;
+     }
+
+     private function getHeaderForType($type)
+     {
+         if (isset($this->typeHeadings[$type])) {
+             return sprintf($this->typeHeadings[$type]) . PHP_EOL;
+         }
+
+         // fabricate a header based on the type name
+         $header = ucfirst(str_replace('type_', '', $type));
+         return "### $header\n";
      }
 
      /**
