@@ -46,8 +46,7 @@
     "autoload": {
         "psr-4": {
             "ins0\\GitHub\\": "src"
-        },
-        "classmap": ["github-changelog-generator.php"]
+        }
     },
     "autoload-dev": {
         "psr-4": {
