@@ -183,7 +183,7 @@ use DateTime;
      private function getHeaderForType($type)
      {
          if (isset($this->typeHeadings[$type])) {
-             return sprintf($this->typeHeadings[$type]) . PHP_EOL;
+             return sprintf($this->typeHeadings[$type]) . "\n";
          }
 
          // fabricate a header based on the type name
