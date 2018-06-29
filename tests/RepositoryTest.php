@@ -2,12 +2,10 @@
 
 namespace ins0\GitHub;
 
-use PHPUnit_Framework_TestCase;
-
 /**
  * This class has a private method and can't be tested properly...
  */
-class RepositoryTest extends PHPUnit_Framework_TestCase
+class RepositoryTest extends TestSuite
 {
 	/**
 	 * @expectedException        InvalidArgumentException
