@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace ins0\GitHub;
 
@@ -47,7 +47,7 @@ class Repository
      * @param string $token      An optional OAUTH token for
      *                           authentication.
      */
-    public function __construct($repository, $token = null)
+    public function __construct(string $repository, string $token = null)
     {
         if (strpos($repository, '/') === false) {
             throw new InvalidArgumentException('Invalid format. Required format is: ":username/:repository".');
@@ -67,7 +67,7 @@ class Repository
      *               whether or not there are any releases for
      *               the current repository.
      */
-    public function getReleases(array $params = [], $page = 1)
+    public function getReleases(array $params = [], int $page = 1): array
     {
         return $this->fetch(sprintf('%s/releases', $this->url), $params, $page);
     }
@@ -82,7 +82,7 @@ class Repository
      *               whether or not there are any issues for
      *               the current repository.
      */
-    public function getIssues(array $params = [], $page = 1)
+    public function getIssues(array $params = [], int $page = 1): array
     {
         return $this->fetch(sprintf('%s/issues', $this->url), $params, $page);
     }
@@ -94,7 +94,7 @@ class Repository
      *               whether or not there are any labels
      *               for the current repository.
      */
-    public function getLabels()
+    public function getLabels(): array
     {
         return $this->fetch(sprintf('%s/labels', $this->url));
     }
@@ -107,7 +107,7 @@ class Repository
      *               whether or not there are any assignees
      *               for the current repository.
      */
-    public function getAssignees()
+    public function getAssignees(): array
     {
         return $this->fetch(sprintf('%s/assignees', $this->url));
     }
@@ -122,7 +122,7 @@ class Repository
      *               whether or not there are any comments for
      *               the selected issue.
      */
-    public function getIssueComments($number, array $params = [])
+    public function getIssueComments(int $number, array $params = []): array
     {
         return $this->fetch(sprintf('%s/issues/%s/events', $this->url, $number), $params);
     }
@@ -136,7 +136,7 @@ class Repository
      *               whether or not there are any events for
      *               the selected issue.
      */
-    public function getIssueEvents($number)
+    public function getIssueEvents(int $number): array
     {
         return $this->fetch(sprintf('%s/issues/%s/events', $this->url, $number));
     }
@@ -150,7 +150,7 @@ class Repository
      *               whether or not there are any labels for
      *               the selected issue.
      */
-    public function getIssueLabels($number)
+    public function getIssueLabels(int $number): array
     {
         return $this->fetch(sprintf('%s/issues/%s/labels', $this->url, $number));
     }
@@ -165,7 +165,7 @@ class Repository
      *                whether or not there are any milestones
      *                for the current repository.
      */
-    public function getMilestones(array $params = [], $page = 1)
+    public function getMilestones(array $params = [], int $page = 1): array
     {
         return $this->fetch(sprintf('%s/milestones', $this->url), $params, $page);
     }
@@ -179,7 +179,7 @@ class Repository
      *
      * @return object|array [description]
      */
-    private function fetch($call, array $params = [], $page = 1)
+    private function fetch(string $call, array $params = [], int $page = 1): array
     {
         $params = array_merge($params, [
             'access_token' => $this->token,
@@ -194,7 +194,7 @@ class Repository
 
         $url = sprintf('%s?%s', $call, http_build_query($params));
         $context  = stream_context_create($options);
-        $response = file_get_contents($url, null, $context);
+        $response = file_get_contents($url, false, $context);
         $response = $response ? json_decode($response) : [];
 
         if (count(preg_grep('#Link: <(.+?)>; rel="next"#', $http_response_header)) === 1) {
