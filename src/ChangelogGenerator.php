@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace ins0\GitHub;
 
@@ -69,7 +69,7 @@ use DateTime;
       *
       * @return string [description]
       */
-     public function generate()
+     public function generate(): string
      {
          $this->currentIssues = null;
          $releases = $this->collectReleaseIssues();
@@ -107,7 +107,7 @@ use DateTime;
       *
       * @throws Exception
       */
-     private function collectReleaseIssues(DateTimeInterface $startDate = null)
+     private function collectReleaseIssues(DateTimeInterface $startDate = null): array
      {
          $releases = $this->repository->getReleases();
 
@@ -140,7 +140,7 @@ use DateTime;
       *
       * @return array [description]
       */
-     private function collectIssues(DateTimeInterface $lastReleaseDate = null)
+     private function collectIssues(DateTimeInterface $lastReleaseDate = null): array
      {
          if (!$this->currentIssues) {
              $this->currentIssues = $this->repository->getIssues(['state' => 'closed']);
@@ -179,7 +179,7 @@ use DateTime;
          return $issues;
      }
 
-     private function getHeaderForType($type)
+     private function getHeaderForType(string $type): string
      {
          if (isset($this->typeHeadings[$type])) {
              return sprintf($this->typeHeadings[$type]) . "\n";
@@ -216,7 +216,7 @@ use DateTime;
       *
       * @return mixed [description]
       */
-     private function getTypeFromLabel($label, $haystack = null)
+     private function getTypeFromLabel(string $label, $haystack = null)
      {
         $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
 
