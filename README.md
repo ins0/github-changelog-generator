@@ -42,9 +42,9 @@ If your repository uses labels other than `feature`, `bug` or `enhancement` you 
 require_once 'vendor/autoload.php';
 
 $labelMappings = [
-    GithubChangelogGenerator::LABEL_TYPE_ADDED => ['feature', 'anotherFeatureLabel'],
-    GithubChangelogGenerator::LABEL_TYPE_CHANGED => ['enhancement', 'anotherEnhancementLabel'],
-    GithubChangelogGenerator::LABEL_TYPE_FIXED => ['bug', 'anotherBugLabel']
+    ins0\GitHub\ChangelogGenerator::LABEL_TYPE_ADDED => ['feature', 'anotherFeatureLabel'],
+    ins0\GitHub\ChangelogGenerator::LABEL_TYPE_CHANGED => ['enhancement', 'anotherEnhancementLabel'],
+    ins0\GitHub\ChangelogGenerator::LABEL_TYPE_FIXED => ['bug', 'anotherBugLabel']
 ];
 
 $changelog = new ins0\GitHub\ChangelogGenerator($repository, $labelMappings);
@@ -55,7 +55,7 @@ If you would like to customize the section headers, you can override the built i
 require_once 'vendor/autoload.php';
 
 $typeHeadings = [
-    GithubChangelogGenerator::LABEL_TYPE_ADDED => '### New stuff!'
+    ins0\GitHub\ChangelogGenerator::LABEL_TYPE_ADDED => '### New stuff!'
 ];
 
 $changelog = new ins0\GitHub\ChangelogGenerator($repository, [], $labelHeaders);
