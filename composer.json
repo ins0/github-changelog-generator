@@ -10,7 +10,7 @@
         "keepachangelog"
     ],
     "require-dev": {
-        "phpunit/phpunit": "4.*"
+        "phpunit/phpunit": "^6.0"
     },
     "license": "MIT",
     "authors": [
@@ -34,7 +34,7 @@
         }
     ],
     "require": {
-        "php": "~5.4|~7.0",
+        "php": "~7.0",
         "nategood/commando": "^0.2.8"
     },
     "bin": [
