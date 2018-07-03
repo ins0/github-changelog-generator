@@ -1,8 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace ins0\GitHub;
 
 use Exception;
+use DateTimeInterface;
 use DateTime;
 
 /**
@@ -68,7 +69,7 @@ use DateTime;
       *
       * @return string [description]
       */
-     public function generate()
+     public function generate(): string
      {
          $this->currentIssues = null;
          $releases = $this->collectReleaseIssues();
@@ -100,13 +101,13 @@ use DateTime;
      /**
       * Get all issues from release tags.
       *
-      * @param mixed $startDate [description]
+      * @param DateTimeInterface|null $startDate [description]
       *
       * @return array [description]
       *
       * @throws Exception
       */
-     private function collectReleaseIssues($startDate = null)
+     private function collectReleaseIssues(DateTimeInterface $startDate = null): array
      {
          $releases = $this->repository->getReleases();
 
@@ -117,14 +118,12 @@ use DateTime;
          do {
              $currentRelease = current($releases);
 
-            if ($startDate &&
-                date_diff(new DateTime($currentRelease->published_at), new DateTime($startDate))->days <= 0
-            ) {
+            if ($startDate && date_diff(new DateTime($currentRelease->published_at), $startDate)->days <= 0) {
                 continue;
             }
 
              $lastRelease = next($releases);
-             $lastReleaseDate = $lastRelease ? $lastRelease->published_at : null;
+             $lastReleaseDate = $lastRelease ? new DateTime($lastRelease->published_at) : null;
              prev($releases);
 
              $currentRelease->issues = $this->collectIssues($lastReleaseDate);
@@ -137,11 +136,11 @@ use DateTime;
      /**
       * Get all issues from release date.
       *
-      * @param mixed $lastReleaseDate [description]
+      * @param DateTimeInterface|null $lastReleaseDate [description]
       *
       * @return array [description]
       */
-     private function collectIssues($lastReleaseDate)
+     private function collectIssues(DateTimeInterface $lastReleaseDate = null): array
      {
          if (!$this->currentIssues) {
              $this->currentIssues = $this->repository->getIssues(['state' => 'closed']);
@@ -150,7 +149,7 @@ use DateTime;
          $issues = [];
 
          foreach ($this->currentIssues as $x => $issue) {
-             if (new \DateTime($issue->closed_at) > new \DateTime($lastReleaseDate) || $lastReleaseDate == null) {
+             if (new DateTime($issue->closed_at) > $lastReleaseDate || $lastReleaseDate == null) {
                  unset($this->currentIssues[$x]);
 
                  $type = $this->getTypeFromLabels($issue->labels);
@@ -180,10 +179,10 @@ use DateTime;
          return $issues;
      }
 
-     private function getHeaderForType($type)
+     private function getHeaderForType(string $type): string
      {
          if (isset($this->typeHeadings[$type])) {
-             return sprintf($this->typeHeadings[$type]) . PHP_EOL;
+             return sprintf($this->typeHeadings[$type]) . "\n";
          }
 
          // fabricate a header based on the type name
@@ -217,7 +216,7 @@ use DateTime;
       *
       * @return mixed [description]
       */
-     private function getTypeFromLabel($label, $haystack = null)
+     private function getTypeFromLabel(string $label, array $haystack = null)
      {
         $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
 

@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace ins0\GitHub;
 
-use PHPUnit_Framework_TestCase;
-
-class ChangelogGeneratorTest extends PHPUnit_Framework_TestCase
+class ChangelogGeneratorTest extends TestSuite
 {
 	/**
 	 * @expectedException        Exception
