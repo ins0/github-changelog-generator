@@ -216,7 +216,7 @@ use DateTime;
       *
       * @return mixed [description]
       */
-     private function getTypeFromLabel(string $label, $haystack = null)
+     private function getTypeFromLabel(string $label, array $haystack = null)
      {
         $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
 
