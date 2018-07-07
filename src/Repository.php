@@ -66,7 +66,7 @@ class Repository
         $headers = [sprintf('User-Agent: %s', self::USER_AGENT)];
 
         if ($token) {
-            $headers[] = [sprintf('Authorization: token %s', $token)];
+            $headers[] = sprintf('Authorization: token %s', $token);
         }
 
         $this->context = stream_context_create(['http' => ['header' => $headers]]);
