@@ -195,7 +195,7 @@ use DateTime;
      private function getTypeFromLabels(array $labels)
      {
          foreach ($labels as $label) {
-             if ($foundLabel = $this->getTypeFromLabel($label->name)) {
+             if ($foundLabel = $this->getTypeFromLabel($label->name, $this->issueLabelMapping)) {
                  return $foundLabel;
              }
          }
@@ -211,10 +211,8 @@ use DateTime;
       *
       * @return mixed [description]
       */
-     private function getTypeFromLabel(string $label, array $haystack = null)
+     private function getTypeFromLabel(string $label, array $haystack)
      {
-        $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
-
         foreach ($haystack as $key => $value) {
             $current_key = $key;
 
