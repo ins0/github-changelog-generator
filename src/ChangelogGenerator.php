@@ -109,7 +109,7 @@ use DateTime;
       */
      private function collectReleaseIssues(DateTimeInterface $startDate = null): array
      {
-         $releases = $this->repository->getReleases();
+         $releases = iterator_to_array($this->repository->getReleases());
 
          if (empty($releases)) {
              throw new Exception('No releases found for this repository');
@@ -143,7 +143,7 @@ use DateTime;
      private function collectIssues(DateTimeInterface $lastReleaseDate = null): array
      {
          if (!$this->currentIssues) {
-             $this->currentIssues = $this->repository->getIssues(['state' => 'closed']);
+             $this->currentIssues = iterator_to_array($this->repository->getIssues(['state' => 'closed']));
          }
 
          $issues = [];
