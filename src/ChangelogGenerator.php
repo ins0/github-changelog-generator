@@ -160,17 +160,12 @@ use DateTime;
 
                  if ($type) {
                      $events = $this->repository->getIssueEvents($issue->number);
-                     $isMerged = false;
 
                      foreach ($events as $event) {
                          if (in_array($event->event, self::$supportedEvents) && !empty($event->commit_id)) {
-                             $isMerged = true;
+                             $issues[$type][] = $issue;
                              break;
                          }
-                     }
-
-                     if ($isMerged) {
-                         $issues[$type][] = $issue;
                      }
                  }
              }
