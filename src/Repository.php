@@ -7,11 +7,9 @@ use Generator;
 use RuntimeException;
 
 /**
- * A simple class for working with GitHub's "Issues" API.
+ * A simple class for fetching data from a single GitHub repository.
  *
- * @see https://developer.github.com/v3/issues/
- *
- * @version 0.2.1
+ * @link https://developer.github.com/v3/
  * @author Marco Rieger (ins0)
  * @author Nathan Bishop (nbish11) (Contributor and Refactorer)
  * @copyright (c) 2015 Marco Rieger
@@ -20,7 +18,7 @@ use RuntimeException;
 class Repository
 {
     /**
-     * The root URL/domain to GitHub's API.
+     * The domain to GitHub's API.
      *
      * @var string
      */
@@ -34,27 +32,25 @@ class Repository
     const USER_AGENT = 'github-changelog-generator';
 
     /**
-     * Stores the full URL to the GitHub v3 API "repos" resource.
+     * The domain and path to the user's repository.
      *
      * @var string
      */
     private $url;
 
     /**
-     * The GitHub OAUTH token to use, if provided.
+     * Additional information sent along with the request.
      *
-     * @var string
+     * @var resource
      */
     private $context;
 
     /**
      * Constructs a new instance.
      *
-     * @param string $repository The username and repository
-     *                           provided in the following
-     *                           format: ":username/:repository".
-     * @param string $token      An optional OAUTH token for
-     *                           authentication.
+     * @param string $repository The username and repository in the following format: ":username/:repository".
+     * @param string|null $token The OAUTH token used to validate against GithHub's API.
+     * @throws InvalidArgumentException If the path to the repository is not in the correct format.
      */
     public function __construct(string $repository, string $token = null)
     {
@@ -75,12 +71,9 @@ class Repository
     /**
      * Fetch all releases for the current repository.
      *
-     * @param array   $params Allows for advanced sorting.
-     * @param integer $page   Skip to a specific page.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any releases for
-     *               the current repository.
+     * @param mixed[] $params Supported parameters are: "page".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getReleases(array $params = []): Generator
     {
@@ -90,12 +83,10 @@ class Repository
     /**
      * Fetches all issues for the current repository.
      *
-     * @param array   $params Allows for advanced sorting.
-     * @param integer $page   Skip to a specific page.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any issues for
-     *               the current repository.
+     * @param mixed[] $params Supported parameters are: "page", "milestone", "state", "assignee",
+     *                        "creator", "mentioned", "labels", "sort", "direction" and "since".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getIssues(array $params = []): Generator
     {
@@ -105,9 +96,8 @@ class Repository
     /**
      * Fetch all labels for the current repository.
      *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any labels
-     *               for the current repository.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getLabels(): Generator
     {
@@ -115,12 +105,10 @@ class Repository
     }
 
     /**
-     * Fetch all available assignees, to which issues may be
-     * assigned to.
+     * Fetch all available assignees, to which issues may be assigned to.
      *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any assignees
-     *               for the current repository.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getAssignees(): Generator
     {
@@ -131,11 +119,9 @@ class Repository
      * Get all comments for a specific issue.
      *
      * @param integer $number The issue number.
-     * @param array   $params Allows for advanced sorting.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any comments for
-     *               the selected issue.
+     * @param mixed[] $params Supported parameters are: "page", sort", "direction" and "since".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getIssueComments(int $number, array $params = []): Generator
     {
@@ -146,10 +132,8 @@ class Repository
      * Get all events for a specific issue.
      *
      * @param integer $number The issue number.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any events for
-     *               the selected issue.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getIssueEvents(int $number): Generator
     {
@@ -160,10 +144,8 @@ class Repository
      * Get all labels attached to a specific issue.
      *
      * @param integer $number The issue number.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any labels for
-     *               the selected issue.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getIssueLabels(int $number): Generator
     {
@@ -173,12 +155,9 @@ class Repository
     /**
      * Fetch all milestones for the current repository.
      *
-     * @param array   $params Allows for advanced sorting.
-     * @param integer $page   Skip to a specific page.
-     *
-     * @return [type] Always returns an array, regardless of
-     *                whether or not there are any milestones
-     *                for the current repository.
+     * @param mixed[] $params Supported parameters are: "page", "state", "sort" and "direction".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     public function getMilestones(array $params = []): Generator
     {
@@ -186,13 +165,11 @@ class Repository
     }
 
     /**
-     * [fetch description]
+     * Make a request to one of GitHub's API endpoints and retrieve the response.
      *
-     * @param string  $call   [description]
-     * @param array   $params [description]
-     * @param integer $page   [description]
-     *
-     * @return object|array [description]
+     * @param string $url The full URL to the API resource.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
     private function fetch(string $url): Generator
     {
@@ -211,7 +188,7 @@ class Repository
     }
 
     /**
-     * [getNextPageFromLinkHeader description]
+     * Determine the "next" page from GitHub's pagination headers.
      *
      * @param string[] $responseHeaders The response headers of the last request sent.
      * @return string The URL of the next page or an empty string.
