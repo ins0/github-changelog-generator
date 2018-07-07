@@ -3,6 +3,8 @@
 namespace ins0\GitHub;
 
 use InvalidArgumentException;
+use Generator;
+use RuntimeException;
 
 /**
  * A simple class for working with GitHub's "Issues" API.
@@ -25,6 +27,13 @@ class Repository
     const GITHUB_API_URL = 'https://api.github.com';
 
     /**
+     * The user agent string sent to GitHub.
+     *
+     * @var string
+     */
+    const USER_AGENT = 'github-changelog-generator';
+
+    /**
      * Stores the full URL to the GitHub v3 API "repos" resource.
      *
      * @var string
@@ -36,7 +45,7 @@ class Repository
      *
      * @var string
      */
-    private $token;
+    private $context;
 
     /**
      * Constructs a new instance.
@@ -54,7 +63,13 @@ class Repository
         }
 
         $this->url = sprintf('%s/repos/%s', self::GITHUB_API_URL, $repository);
-        $this->token = $token;
+        $headers = [sprintf('User-Agent: %s', self::USER_AGENT)];
+
+        if ($token) {
+            $headers[] = [sprintf('Authorization: token %s', $token)];
+        }
+
+        $this->context = stream_context_create(['http' => ['header' => $headers]]);
     }
 
     /**
@@ -67,9 +82,9 @@ class Repository
      *               whether or not there are any releases for
      *               the current repository.
      */
-    public function getReleases(array $params = [], int $page = 1): array
+    public function getReleases(array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/releases', $this->url), $params, $page);
+        return $this->fetch(sprintf('%s/releases?%s', $this->url, http_build_query($params)));
     }
 
     /**
@@ -82,9 +97,9 @@ class Repository
      *               whether or not there are any issues for
      *               the current repository.
      */
-    public function getIssues(array $params = [], int $page = 1): array
+    public function getIssues(array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/issues', $this->url), $params, $page);
+        return $this->fetch(sprintf('%s/issues?%s', $this->url, http_build_query($params)));
     }
 
     /**
@@ -94,7 +109,7 @@ class Repository
      *               whether or not there are any labels
      *               for the current repository.
      */
-    public function getLabels(): array
+    public function getLabels(): Generator
     {
         return $this->fetch(sprintf('%s/labels', $this->url));
     }
@@ -107,7 +122,7 @@ class Repository
      *               whether or not there are any assignees
      *               for the current repository.
      */
-    public function getAssignees(): array
+    public function getAssignees(): Generator
     {
         return $this->fetch(sprintf('%s/assignees', $this->url));
     }
@@ -122,9 +137,9 @@ class Repository
      *               whether or not there are any comments for
      *               the selected issue.
      */
-    public function getIssueComments(int $number, array $params = []): array
+    public function getIssueComments(int $number, array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/issues/%s/events', $this->url, $number), $params);
+        return $this->fetch(sprintf('%s/issues/%d/events?%s', $this->url, $number, http_build_query($params)));
     }
 
     /**
@@ -136,9 +151,9 @@ class Repository
      *               whether or not there are any events for
      *               the selected issue.
      */
-    public function getIssueEvents(int $number): array
+    public function getIssueEvents(int $number): Generator
     {
-        return $this->fetch(sprintf('%s/issues/%s/events', $this->url, $number));
+        return $this->fetch(sprintf('%s/issues/%d/events', $this->url, $number));
     }
 
     /**
@@ -150,9 +165,9 @@ class Repository
      *               whether or not there are any labels for
      *               the selected issue.
      */
-    public function getIssueLabels(int $number): array
+    public function getIssueLabels(int $number): Generator
     {
-        return $this->fetch(sprintf('%s/issues/%s/labels', $this->url, $number));
+        return $this->fetch(sprintf('%s/issues/%d/labels', $this->url, $number));
     }
 
     /**
@@ -165,9 +180,9 @@ class Repository
      *                whether or not there are any milestones
      *                for the current repository.
      */
-    public function getMilestones(array $params = [], int $page = 1): array
+    public function getMilestones(array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/milestones', $this->url), $params, $page);
+        return $this->fetch(sprintf('%s/milestones?%s', $this->url, http_build_query($params)));
     }
 
     /**
@@ -179,28 +194,36 @@ class Repository
      *
      * @return object|array [description]
      */
-    private function fetch(string $call, array $params = [], int $page = 1): array
+    private function fetch(string $url): Generator
     {
-        $params = array_merge($params, [
-            'access_token' => $this->token,
-            'page' => $page
-        ]);
+        $response = file_get_contents($url, false, $this->context);
 
-        $options  = [
-            'http' => [
-                'user_agent' => 'github-changelog-generator'
-            ]
-        ];
-
-        $url = sprintf('%s?%s', $call, http_build_query($params));
-        $context  = stream_context_create($options);
-        $response = file_get_contents($url, false, $context);
-        $response = $response ? json_decode($response) : [];
-
-        if (count(preg_grep('#Link: <(.+?)>; rel="next"#', $http_response_header)) === 1) {
-            return array_merge($response, $this->fetch($call, $params, ++$page));
+        if (!$response) {
+            throw new RuntimeException(sprintf('Cannot connect to: %s', $url));
         }
 
-        return $response;
+        yield from json_decode($response);
+
+        // "It's important to form calls with Link header values instead of constructing your own URLs." - GitHub
+        if ($nextPage = $this->getNextPageFromLinkHeader($http_response_header)) {
+            yield from $this->fetch($nextPage);
+        }
+    }
+
+    /**
+     * [getNextPageFromLinkHeader description]
+     *
+     * @param string[] $responseHeaders The response headers of the last request sent.
+     * @return string The URL of the next page or an empty string.
+     */
+    private function getNextPageFromLinkHeader(array $responseHeaders): string
+    {
+        foreach ($responseHeaders as $responseHeader) {
+            if (preg_match('`<([^>]*)>; rel="next"`', $responseHeader, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return '';
     }
 }
