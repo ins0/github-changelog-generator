@@ -5,6 +5,7 @@ namespace ins0\GitHub;
 use Exception;
 use DateTimeInterface;
 use DateTime;
+use stdClass;
 
 /**
  * Generates a changelog using your GitHub repository's releases, issues and pull-requests.
@@ -25,6 +26,7 @@ use DateTime;
      const LABEL_TYPE_FIXED = 'type_fixed';
      const LABEL_TYPE_SECURITY = 'type_security';
      const LABEL_TYPE_PR = 'type_pr';
+     const LABEL_TYPE_UNKNOWN = '';
 
      private $repository;
      private $currentIssues;
@@ -152,11 +154,7 @@ use DateTime;
              if (new DateTime($issue->closed_at) > $lastReleaseDate || $lastReleaseDate == null) {
                  unset($this->currentIssues[$x]);
 
-                 $type = $this->getTypeFromLabels($issue->labels);
-
-                 if (!$type && isset($issue->pull_request)) {
-                     $type = $this::LABEL_TYPE_PR;
-                 }
+                 $type = $this->determineChangeType($issue);
 
                  if ($type) {
                      $events = $this->repository->getIssueEvents($issue->number);
@@ -192,37 +190,25 @@ use DateTime;
       *
       * @return mixed [description]
       */
-     private function getTypeFromLabels(array $labels)
+     private function determineChangeType(stdClass $issue): string
      {
-         foreach ($labels as $label) {
-             if ($foundLabel = $this->getTypeFromLabel($label->name, $this->issueLabelMapping)) {
-                 return $foundLabel;
-             }
-         }
-
-         return null;
-     }
-
-     /**
-      * Get type from label.
-      *
-      * @param string $label    [description]
-      * @param mixed  $haystack [description]
-      *
-      * @return mixed [description]
-      */
-     private function getTypeFromLabel(string $label, array $haystack)
-     {
-        foreach ($haystack as $key => $value) {
-            $current_key = $key;
-
-            if ((is_array($value) && $this->getTypeFromLabel($label, $value) !== false) ||
-                (!is_array($value) && strcasecmp($label, $value) === 0)
-            ) {
-                return $current_key;
+        // Determine change type from an issue's labels
+        foreach ($this->issueLabelMapping as $changeType => $labelsUsedToDetermineChangeType) {
+            foreach ((array) $labelsUsedToDetermineChangeType as $labelForChangeType) {
+                foreach ($issue->labels as $issueLabel) {
+                    if (strcasecmp($issueLabel->name, $labelForChangeType) === 0) {
+                        return $changeType;
+                    }
+                }
             }
         }
 
-        return false;
+         // Couldn't find a change type based of labels, maybe it's a PR with no labels
+         if (isset($issue->pull_request)) {
+             return self::LABEL_TYPE_PR;
+         }
+
+         // No change type could be determined
+         return self::LABEL_TYPE_UNKNOWN;
      }
  }
