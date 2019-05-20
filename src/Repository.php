@@ -5,6 +5,7 @@ namespace ins0\GitHub;
 use InvalidArgumentException;
 use Generator;
 use RuntimeException;
+use JsonMachine\JsonMachine;
 
 /**
  * A simple class for fetching data from a single GitHub repository.
@@ -173,13 +174,15 @@ class Repository
      */
     private function fetch(string $url): Generator
     {
-        $response = file_get_contents($url, false, $this->context);
+        $response = fopen($url, 'r', false, $this->context);
 
         if (!$response) {
             throw new RuntimeException(sprintf('Cannot connect to: %s', $url));
         }
 
-        yield from json_decode($response);
+        yield from JsonMachine::fromStream($response);
+
+        fclose($response);
 
         // "It's important to form calls with Link header values instead of constructing your own URLs." - GitHub
         if ($nextPage = $this->getNextPageFromLinkHeader($http_response_header)) {
