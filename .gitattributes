@@ -1,0 +1,11 @@
+* text=auto
+*.bat   text eol=crlf
+*.json  text
+*.php   text
+*.sh    text eol=lf
+*.xml   text
+*.md    text
+.editorconfig   text
+.gitattributes  text
+.gitconfig  text
+*.yml   text
