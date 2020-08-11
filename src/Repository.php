@@ -3,13 +3,14 @@
 namespace ins0\GitHub;
 
 use InvalidArgumentException;
+use Generator;
+use RuntimeException;
+use JsonMachine\JsonMachine;
 
 /**
- * A simple class for working with GitHub's "Issues" API.
+ * A simple class for fetching data from a single GitHub repository.
  *
- * @see https://developer.github.com/v3/issues/
- *
- * @version 0.2.1
+ * @link https://developer.github.com/v3/
  * @author Marco Rieger (ins0)
  * @author Nathan Bishop (nbish11) (Contributor and Refactorer)
  * @copyright (c) 2015 Marco Rieger
@@ -18,34 +19,39 @@ use InvalidArgumentException;
 class Repository
 {
     /**
-     * The root URL/domain to GitHub's API.
+     * The domain to GitHub's API.
      *
      * @var string
      */
     const GITHUB_API_URL = 'https://api.github.com';
 
     /**
-     * Stores the full URL to the GitHub v3 API "repos" resource.
+     * The user agent string sent to GitHub.
+     *
+     * @var string
+     */
+    const USER_AGENT = 'github-changelog-generator';
+
+    /**
+     * The domain and path to the user's repository.
      *
      * @var string
      */
     private $url;
 
     /**
-     * The GitHub OAUTH token to use, if provided.
+     * Additional information sent along with the request.
      *
-     * @var string
+     * @var resource
      */
-    private $token;
+    private $context;
 
     /**
      * Constructs a new instance.
      *
-     * @param string $repository The username and repository
-     *                           provided in the following
-     *                           format: ":username/:repository".
-     * @param string $token      An optional OAUTH token for
-     *                           authentication.
+     * @param string $repository The username and repository in the following format: ":username/:repository".
+     * @param string|null $token The OAUTH token used to validate against GithHub's API.
+     * @throws InvalidArgumentException If the path to the repository is not in the correct format.
      */
     public function __construct(string $repository, string $token = null)
     {
@@ -54,60 +60,58 @@ class Repository
         }
 
         $this->url = sprintf('%s/repos/%s', self::GITHUB_API_URL, $repository);
-        $this->token = $token;
+        $headers = [sprintf('User-Agent: %s', self::USER_AGENT)];
+
+        if ($token) {
+            $headers[] = sprintf('Authorization: token %s', $token);
+        }
+
+        $this->context = stream_context_create(['http' => ['header' => $headers]]);
     }
 
     /**
      * Fetch all releases for the current repository.
      *
-     * @param array   $params Allows for advanced sorting.
-     * @param integer $page   Skip to a specific page.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any releases for
-     *               the current repository.
+     * @param mixed[] $params Supported parameters are: "page".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getReleases(array $params = [], int $page = 1): array
+    public function getReleases(array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/releases', $this->url), $params, $page);
+        return $this->fetch(sprintf('%s/releases?%s', $this->url, http_build_query($params)));
     }
 
     /**
      * Fetches all issues for the current repository.
      *
-     * @param array   $params Allows for advanced sorting.
-     * @param integer $page   Skip to a specific page.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any issues for
-     *               the current repository.
+     * @param mixed[] $params Supported parameters are: "page", "milestone", "state", "assignee",
+     *                        "creator", "mentioned", "labels", "sort", "direction" and "since".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getIssues(array $params = [], int $page = 1): array
+    public function getIssues(array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/issues', $this->url), $params, $page);
+        return $this->fetch(sprintf('%s/issues?%s', $this->url, http_build_query($params)));
     }
 
     /**
      * Fetch all labels for the current repository.
      *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any labels
-     *               for the current repository.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getLabels(): array
+    public function getLabels(): Generator
     {
         return $this->fetch(sprintf('%s/labels', $this->url));
     }
 
     /**
-     * Fetch all available assignees, to which issues may be
-     * assigned to.
+     * Fetch all available assignees, to which issues may be assigned to.
      *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any assignees
-     *               for the current repository.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getAssignees(): array
+    public function getAssignees(): Generator
     {
         return $this->fetch(sprintf('%s/assignees', $this->url));
     }
@@ -116,91 +120,92 @@ class Repository
      * Get all comments for a specific issue.
      *
      * @param integer $number The issue number.
-     * @param array   $params Allows for advanced sorting.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any comments for
-     *               the selected issue.
+     * @param mixed[] $params Supported parameters are: "page", sort", "direction" and "since".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getIssueComments(int $number, array $params = []): array
+    public function getIssueComments(int $number, array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/issues/%s/events', $this->url, $number), $params);
+        return $this->fetch(sprintf('%s/issues/%d/events?%s', $this->url, $number, http_build_query($params)));
     }
 
     /**
      * Get all events for a specific issue.
      *
      * @param integer $number The issue number.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any events for
-     *               the selected issue.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getIssueEvents(int $number): array
+    public function getIssueEvents(int $number): Generator
     {
-        return $this->fetch(sprintf('%s/issues/%s/events', $this->url, $number));
+        return $this->fetch(sprintf('%s/issues/%d/events', $this->url, $number));
     }
 
     /**
      * Get all labels attached to a specific issue.
      *
      * @param integer $number The issue number.
-     *
-     * @return array Always returns an array, regardless of
-     *               whether or not there are any labels for
-     *               the selected issue.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getIssueLabels(int $number): array
+    public function getIssueLabels(int $number): Generator
     {
-        return $this->fetch(sprintf('%s/issues/%s/labels', $this->url, $number));
+        return $this->fetch(sprintf('%s/issues/%d/labels', $this->url, $number));
     }
 
     /**
      * Fetch all milestones for the current repository.
      *
-     * @param array   $params Allows for advanced sorting.
-     * @param integer $page   Skip to a specific page.
-     *
-     * @return [type] Always returns an array, regardless of
-     *                whether or not there are any milestones
-     *                for the current repository.
+     * @param mixed[] $params Supported parameters are: "page", "state", "sort" and "direction".
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    public function getMilestones(array $params = [], int $page = 1): array
+    public function getMilestones(array $params = []): Generator
     {
-        return $this->fetch(sprintf('%s/milestones', $this->url), $params, $page);
+        return $this->fetch(sprintf('%s/milestones?%s', $this->url, http_build_query($params)));
     }
 
     /**
-     * [fetch description]
+     * Make a request to one of GitHub's API endpoints and retrieve the response.
      *
-     * @param string  $call   [description]
-     * @param array   $params [description]
-     * @param integer $page   [description]
-     *
-     * @return object|array [description]
+     * @param string $url The full URL to the API resource.
+     * @throws RuntimeException If a connection could not be established to the URL.
+     * @return Generator An iterator that gradually resolves with more data as it becomes available.
      */
-    private function fetch(string $call, array $params = [], int $page = 1): array
+    private function fetch(string $url): Generator
     {
-        $params = array_merge($params, [
-            'access_token' => $this->token,
-            'page' => $page
-        ]);
+        set_time_limit(15);     // prevent timeouts - time limit is reset on every recursive call
 
-        $options  = [
-            'http' => [
-                'user_agent' => 'github-changelog-generator'
-            ]
-        ];
+        $response = fopen($url, 'r', false, $this->context);
 
-        $url = sprintf('%s?%s', $call, http_build_query($params));
-        $context  = stream_context_create($options);
-        $response = file_get_contents($url, false, $context);
-        $response = $response ? json_decode($response) : [];
-
-        if (count(preg_grep('#Link: <(.+?)>; rel="next"#', $http_response_header)) === 1) {
-            return array_merge($response, $this->fetch($call, $params, ++$page));
+        if (!$response) {
+            throw new RuntimeException(sprintf('Cannot connect to: %s', $url));
         }
 
-        return $response;
+        yield from JsonMachine::fromStream($response);
+
+        fclose($response);
+
+        // "It's important to form calls with Link header values instead of constructing your own URLs." - GitHub
+        if ($nextPage = $this->getNextPageFromLinkHeader($http_response_header)) {
+            yield from $this->fetch($nextPage);
+        }
+    }
+
+    /**
+     * Determine the "next" page from GitHub's pagination headers.
+     *
+     * @param string[] $responseHeaders The response headers of the last request sent.
+     * @return string The URL of the next page or an empty string.
+     */
+    private function getNextPageFromLinkHeader(array $responseHeaders): string
+    {
+        foreach ($responseHeaders as $responseHeader) {
+            if (preg_match('`<([^>]*)>; rel="next"`', $responseHeader, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return '';
     }
 }

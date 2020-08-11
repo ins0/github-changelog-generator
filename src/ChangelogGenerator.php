@@ -5,6 +5,7 @@ namespace ins0\GitHub;
 use Exception;
 use DateTimeInterface;
 use DateTime;
+use stdClass;
 
 /**
  * Generates a changelog using your GitHub repository's releases, issues and pull-requests.
@@ -25,6 +26,7 @@ use DateTime;
      const LABEL_TYPE_FIXED = 'type_fixed';
      const LABEL_TYPE_SECURITY = 'type_security';
      const LABEL_TYPE_PR = 'type_pr';
+     const LABEL_TYPE_UNKNOWN = '';
 
      private $repository;
      private $currentIssues;
@@ -109,7 +111,7 @@ use DateTime;
       */
      private function collectReleaseIssues(DateTimeInterface $startDate = null): array
      {
-         $releases = $this->repository->getReleases();
+         $releases = iterator_to_array($this->repository->getReleases());
 
          if (empty($releases)) {
              throw new Exception('No releases found for this repository');
@@ -143,7 +145,7 @@ use DateTime;
      private function collectIssues(DateTimeInterface $lastReleaseDate = null): array
      {
          if (!$this->currentIssues) {
-             $this->currentIssues = $this->repository->getIssues(['state' => 'closed']);
+             $this->currentIssues = iterator_to_array($this->repository->getIssues(['state' => 'closed']));
          }
 
          $issues = [];
@@ -152,25 +154,16 @@ use DateTime;
              if (new DateTime($issue->closed_at) > $lastReleaseDate || $lastReleaseDate == null) {
                  unset($this->currentIssues[$x]);
 
-                 $type = $this->getTypeFromLabels($issue->labels);
-
-                 if (!$type && isset($issue->pull_request)) {
-                     $type = $this::LABEL_TYPE_PR;
-                 }
+                 $type = $this->determineChangeType($issue);
 
                  if ($type) {
                      $events = $this->repository->getIssueEvents($issue->number);
-                     $isMerged = false;
 
                      foreach ($events as $event) {
                          if (in_array($event->event, self::$supportedEvents) && !empty($event->commit_id)) {
-                             $isMerged = true;
+                             $issues[$type][] = $issue;
                              break;
                          }
-                     }
-
-                     if ($isMerged) {
-                         $issues[$type][] = $issue;
                      }
                  }
              }
@@ -197,39 +190,25 @@ use DateTime;
       *
       * @return mixed [description]
       */
-     private function getTypeFromLabels(array $labels)
+     private function determineChangeType(stdClass $issue): string
      {
-         foreach ($labels as $label) {
-             if ($foundLabel = $this->getTypeFromLabel($label->name)) {
-                 return $foundLabel;
-             }
-         }
-
-         return null;
-     }
-
-     /**
-      * Get type from label.
-      *
-      * @param string $label    [description]
-      * @param mixed  $haystack [description]
-      *
-      * @return mixed [description]
-      */
-     private function getTypeFromLabel(string $label, array $haystack = null)
-     {
-        $haystack = !$haystack ? $this->issueLabelMapping : $haystack;
-
-        foreach ($haystack as $key => $value) {
-            $current_key = $key;
-
-            if ((is_array($value) && $this->getTypeFromLabel($label, $value) !== false) ||
-                (!is_array($value) && strcasecmp($label, $value) === 0)
-            ) {
-                return $current_key;
+        // Determine change type from an issue's labels
+        foreach ($this->issueLabelMapping as $changeType => $labelsUsedToDetermineChangeType) {
+            foreach ((array) $labelsUsedToDetermineChangeType as $labelForChangeType) {
+                foreach ($issue->labels as $issueLabel) {
+                    if (strcasecmp($issueLabel->name, $labelForChangeType) === 0) {
+                        return $changeType;
+                    }
+                }
             }
         }
 
-        return false;
+         // Couldn't find a change type based of labels, maybe it's a PR with no labels
+         if (isset($issue->pull_request)) {
+             return self::LABEL_TYPE_PR;
+         }
+
+         // No change type could be determined
+         return self::LABEL_TYPE_UNKNOWN;
      }
  }
